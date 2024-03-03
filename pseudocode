@@ -1,0 +1,5 @@
+Ship placement
+- When the user enter the board show the current ship to place
+- When the user is within the board it should be green, if outside red
+- When user click on the board with selected ship, place the ship on board - black squares
+- Iterate until there are no ships left to place
