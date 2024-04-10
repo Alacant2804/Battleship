@@ -113,6 +113,10 @@ a:hover {
     color: #ffcc00;
 }
 
-.ship {
-    background-color: black;
+.cell.ship {
+    background-color: navy;
+}
+
+.cell.preview {
+    background-color: lightblue;
 }

@@ -41,8 +41,38 @@ function createBoard(containerId, size) {
         const cell = document.createElement('div');
         cell.classList.add('cell');
         cell.setAttribute('data-index', i);
+
+        if (containerId === 'moduloGameboard') {
+            cell.addEventListener('mouseover', (e) => showShipPreview(e, currentShip, currentOrientation));
+            cell.addEventListener('mouseout', (e) => clearShipPreview(e, currentShip, currentOrientation));
+        }
+
         container.appendChild(cell);
     }
+
+    return container;
+}
+
+function showShipPreview(e, ship, orientation) {
+    if (!ship) return;
+
+    const index = parseInt(e.target.getAttribute('data-index'), 10);
+    const moduloGameboard = document.getElementById('moduloGameboard').children;
+    
+    for (let i = 0; i < ship.length; i++) {
+        let cellIndex = orientation === 'horizontal' ? index + i : index + i * boardSize;
+        if (cellIndex < moduloGameboard.length) {
+            moduloGameboard[cellIndex].classList.add('preview');
+        }
+    }
+}
+
+function clearShipPreview(e, ship, orientation) {
+    const moduloGameboard = document.getElementById('moduloGameboard').children;
+
+    Array.from(moduloGameboard).forEach(cell => {
+        cell.classList.remove('preview');
+    });
 }
 
 function canPlaceShip(startIndex, shipLength, orientation, boardSize) {
@@ -117,3 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     currentShip = ships.shift();
 });
+
+
+
+
