@@ -6,7 +6,6 @@ const modulo = document.querySelector('.modulo');
 let currentShip = null;
 let currentOrientation = 'horizontal';
 
-
 toggleButton.addEventListener('click', () => {
     if (placementDisplay.textContent === 'Horizontal') {
         placementDisplay.textContent = 'Vertical';
@@ -36,79 +35,85 @@ const ships = [
 
 function createBoard(containerId, size) {
     const container = document.getElementById(containerId);
+    container.innerHTML = '';
 
-    for (let i = 0; i < size; i++) {
-        const row = document.createElement('div');
-        row.classList.add('row');
-
-        for (let j = 0; j < size; j++) {
-            const cell = document.createElement('div');
-            cell.classList.add('cell');
-
-            cell.setAttribute('data-row', i);
-            cell.setAttribute('data-col', j);
-
-            row.appendChild(cell);
-        }
-
-        container.appendChild(row);
+    for (let i = 0; i < size * size; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.setAttribute('data-index', i);
+        container.appendChild(cell);
     }
-
-    return container;
 }
 
-//Create boards
-document.addEventListener('DOMContentLoaded', function() {
-    const userGameboard = createBoard('userGameboard', 10); 
-    const computerGameboard = createBoard('computerGameboard', 10);
-    const moduloGameboard = createBoard('moduloGameboard', 10);
+function canPlaceShip(startIndex, shipLength, orientation, boardSize) {
+    const moduloGameboard = document.getElementById('moduloGameboard').children;
+    
+    if (orientation === 'horizontal') {
+        const startRow = Math.floor(startIndex / boardSize);
+        const endRow = Math.floor((startIndex + shipLength - 1) / boardSize);
+        
+        if (endRow > startRow) return false;
+        
+        for (let i = 0; i < shipLength; i++) {
+            if (moduloGameboard[startIndex + i].classList.contains('ship')) return false;
+        }
+    }
+    else {
+        if (Math.floor(startIndex / boardSize) + shipLength > boardSize) return false;
+        for (let i = 0; i < shipLength; i++) {
+            if (moduloGameboard[startIndex + i * boardSize].classList.contains('ship')) return false;
+        }
+    }
+    
+    return true; 
+}
 
-    // Add event listeners to the cells
-    const cells = document.querySelectorAll('.cell');
-    cells.forEach(cell => {
-        cell.addEventListener('mouseover', handleCellHover);
-        cell.addEventListener('click', handleCellClick);
-    });
-});
-
-function handleCellHover(event) {
-    const cell = event.target;
-    if (currentShip) {
-        indicatePotentialPlacement(cell);
+function placeShip(cell, ship, orientation) {
+    const index = parseInt(cell.getAttribute('data-index'), 10);
+    const moduloGameboard = document.getElementById('moduloGameboard').children;
+    const boardSize = 10;
+    
+    if (canPlaceShip(index, ship.length, orientation, boardSize)) {
+        for (let i = 0; i < ship.length; i++) {
+            if (orientation === 'horizontal') {
+                moduloGameboard[index + i].classList.add('ship');
+            } else {
+                moduloGameboard[index + i * boardSize].classList.add('ship');
+            }
+        }
+        return true;
+    } else {
+        alert('Invalid placement');
+        return false;
     }
 }
 
 function handleCellClick(event) {
     const cell = event.target;
     if (currentShip) {
-        const success = placeShip(cell);
+        const success = placeShip(cell, currentShip, placementDisplay.textContent.toLowerCase());
         if (success) {
-            currentShip = null;
-        }
-    } else {
-        if (ships.length > 0) {
-            currentShip = ships.shift(); // Remove the first ship from the array
-            currentOrientation = 'horizontal'; // Start with horizontal placement
-            // Optionally, update the UI to reflect the current ship being placed
+            currentShip = ships.length > 0 ? ships.shift() : null; 
+            if (!currentShip) {
+                console.log('All ships placed');
+            }
         }
     }
 }
 
-function placeShip(cell) {
-    // Logic to place the ship on the board based on its current orientation
-    // This will involve checking if the ship fits in the current orientation and position
-    // Return true if the ship was successfully placed, false otherwise
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const userGameboard = createBoard('userGameboard', 10); 
+    const computerGameboard = createBoard('computerGameboard', 10);
+    const moduloGameboard = createBoard('moduloGameboard', 10);
 
-function clearPotentialPlacement() {
-    // Reset the background color of all cells to their original state
-    const cells = document.querySelectorAll('.cell');
+    const cells = moduloGameboard.querySelectorAll('.cell');
     cells.forEach(cell => {
-        cell.style.backgroundColor = ''; // Reset background color
+        cell.addEventListener('click', handleCellClick);
     });
-}
 
-function resetPotentialPlacement() {
-    // Logic to reset the visual indication of where the ship would be placed
-    // This could involve resetting the background color of the cells or removing temporary ship elements
-}
+    toggleButton.addEventListener('click', () => {
+        placementDisplay.textContent = placementDisplay.textContent === 'Horizontal' ? 'Vertical' : 'Horizontal';
+    });
+
+    currentShip = ships.shift();
+});

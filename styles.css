@@ -23,20 +23,17 @@
 
 .game-board {
     display: grid;
-    grid-template-columns: repeat(10, 40px); 
-    grid-template-rows: repeat(10, 40px); 
-    margin-bottom: 20px;
+    grid-template-columns: repeat(10, 1fr);
+    width: 100%;
+    max-width: 600px;
+    margin: auto;
+    gap: 1px;
 }
 
 .cell {
+    aspect-ratio: 1 / 1; 
     background-color: #bbb;
     border: 1px solid #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    box-sizing: border-box;
 }
 
 .modulo {
@@ -95,13 +92,6 @@
 .modulo-gameboard .cell:hover, .game-board .cell:hover {
     background-color: #f0f0f0;
 }
-
-
-
-
-
-
-
 
 .footer {
     background-color: #333;
