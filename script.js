@@ -64,36 +64,54 @@ function clearShipPreview(e, ship, orientation) {
     });
 }
 
-function canPlaceShip(startIndex, shipLength, orientation, boardSize) {
-    const moduloGameboard = document.getElementById('moduloGameboard').children;
-    
-    if (orientation === 'horizontal') {
-        const startRow = Math.floor(startIndex / boardSize);
-        const endRow = Math.floor((startIndex + shipLength - 1) / boardSize);
-        
-        if (endRow > startRow) return false;
-        
-        for (let i = 0; i < shipLength; i++) {
-            if (moduloGameboard[startIndex + i].classList.contains('ship')) return false;
+function isSurroundingCellEmpty(cellIndex, board, boardSize) {
+    const row = Math.floor(cellIndex / boardSize);
+    const col = cellIndex % boardSize;
+
+    for (let dRow = -1; dRow <= 1; dRow++) {
+        for (let dCol = -1; dCol <= 1; dCol++) {
+            const checkRow = row + dRow;
+            const checkCol = col + dCol;
+
+            if (checkRow < 0 || checkRow >= boardSize || checkCol < 0 || checkCol >= boardSize) continue;
+
+            const surroundingCellIndex = checkRow * boardSize + checkCol;
+
+            if (board[surroundingCellIndex].classList.contains('ship')) {
+                return false; 
+            }
         }
     }
-    else {
-        if (Math.floor(startIndex / boardSize) + shipLength > boardSize) return false;
-        for (let i = 0; i < shipLength; i++) {
-            if (moduloGameboard[startIndex + i * boardSize].classList.contains('ship')) return false;
-        }
-    }
-    
     return true; 
 }
 
+function canPlaceShip(startIndex, shipLength, orientation, board, boardSize) {
+    for (let i = 0; i < shipLength; i++) {
+        let cellIndex;
+        if (orientation === 'horizontal') {
+            cellIndex = startIndex + i;
+        } else { 
+            cellIndex = startIndex + i * boardSize;
+        }
+
+        if (!board[cellIndex] || board[cellIndex].classList.contains('ship')) {
+            return false;
+        }
+
+        if (!isSurroundingCellEmpty(cellIndex, board, boardSize)) {
+            return false; 
+        }
+    }
+
+    return true;
+}
 
 function placeShip(cell, ship, orientation) {
     const index = parseInt(cell.getAttribute('data-index'), 10);
     const moduloGameboard = document.getElementById('moduloGameboard').children;
     const boardSize = 10;
     
-    if (canPlaceShip(index, ship.length, orientation, boardSize)) {
+    if (canPlaceShip(index, ship.length, orientation, moduloGameboard, boardSize)) {
         for (let i = 0; i < ship.length; i++) {
             if (orientation === 'horizontal') {
                 moduloGameboard[index + i].classList.add('ship');
