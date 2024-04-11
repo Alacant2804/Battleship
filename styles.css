@@ -20,35 +20,35 @@ body, html {
     justify-content: center;
     gap: 20px;
     padding: 20px;
-    flex-wrap: wrap; /* Ensure boards wrap on smaller screens */
+    flex-wrap: wrap;
 }
 
 .game-board, .modulo-gameboard {
     display: grid;
-    grid-template-columns: repeat(10, 1fr); /* Creates a 10x10 grid */
+    grid-template-columns: repeat(10, 1fr);
     gap: 2px;
-    width: 80vw; /* Responsive width */
-    height: 80vw; /* Maintains aspect ratio */
-    max-width: 500px; /* Maximum size */
-    max-height: 500px; /* Maximum size */
-    margin: auto; /* Center the boards if within a flex container */
+    width: 80vw;
+    height: 80vw;
+    max-width: 500px;
+    max-height: 500px;
+    margin: auto;
 }
 
 .cell {
     background-color: #a9d0f5;
-    border-radius: 3px; /* For rounded corners */
-    display: flex; /* Flex container for centering content */
-    align-items: center; /* Vertical centering */
-    justify-content: center; /* Horizontal centering */
+    border-radius: 3px; 
+    display: flex;
+    align-items: center;
+    justify-content: center; 
     cursor: pointer;
 }
 
 .cell.ship {
-    background-color: #0d6efd; /* Color for cells that have ships */
+    background-color: #0d6efd; 
 }
 
 .cell.preview {
-    background-color: #20c997; /* Preview color when hovering */
+    background-color: #20c997; 
 }
 
 .modulo {
@@ -66,14 +66,15 @@ body, html {
     align-items: center;
     width: auto;
     max-width: 80%;
-    z-index: 10; /* Ensure it's above other elements */
+    z-index: 10; 
 }
 
 .modulo-gameboard {
     display: grid;
-    grid-template-columns: repeat(10, 3vw); /* Responsive smaller cells for ship placement */
-    gap: 2px;
-    max-width: 500px; /* Adjust if needed */
+    grid-template-columns: repeat(10, 30px); /* Defines the number of columns and their size */
+    gap: 2px; /* Space between grid items */
+    justify-content: center; /* Centers grid items within the grid container */
+    padding: 10px; /* Optional: Adds some space inside the grid container */
 }
 
 .placementDisplay, .modulo button {
@@ -82,7 +83,7 @@ body, html {
     color: #004d99;
     font-weight: bold;
     padding: 8px 15px;
-    margin: 5px 0; /* Spacing between buttons */
+    margin: 5px 0; 
     background-color: #007bff;
     color: white;
     border: none;
@@ -91,15 +92,11 @@ body, html {
 }
 
 #toggleButton {
-    background-color: #ffc107; /* Highlight ship orientation toggle */
-}
-
-#toggleButton:hover, .doneButton:hover {
-    opacity: 0.8;
+    background-color: #ffc107; 
 }
 
 .doneButton {
-    background-color: #28a745; /* Confirm placement */
+    background-color: #28a745;
 }
 
 .footer {
@@ -119,7 +116,7 @@ body, html {
     }
 
     .game-board, .modulo-gameboard {
-        width: 90vw; /* Adjust the board size for smaller screens */
-        height: 90vw; /* Maintain aspect ratio */
+        width: 90vw; 
+        height: 90vw;
     }
 }
