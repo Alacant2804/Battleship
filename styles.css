@@ -113,6 +113,11 @@ body, html {
     width: 100%;
 }
 
+a {
+    text-decoration: none;
+    color: #ffc107;
+}
+
 @media (max-width: 768px) {
     .boards {
         flex-direction: column;

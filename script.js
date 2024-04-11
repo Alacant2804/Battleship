@@ -6,14 +6,6 @@ const modulo = document.querySelector('.modulo');
 let currentShip = null;
 let currentOrientation = 'horizontal';
 
-toggleButton.addEventListener('click', () => {
-    if (placementDisplay.textContent === 'Horizontal') {
-        placementDisplay.textContent = 'Vertical';
-    } else {
-        placementDisplay.textContent = 'Horizontal';
-    }
-});
-
 doneButton.addEventListener('click', () => {
     modulo.style.display = 'none';
 })
@@ -142,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     toggleButton.addEventListener('click', () => {
+        console.log("Toggle button clicked");
         placementDisplay.textContent = placementDisplay.textContent === 'Horizontal' ? 'Vertical' : 'Horizontal';
     });
 
