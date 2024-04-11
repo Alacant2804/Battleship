@@ -5,10 +5,7 @@ const modulo = document.querySelector('.modulo');
 
 let currentShip = null;
 let currentOrientation = 'horizontal';
-
-doneButton.addEventListener('click', () => {
-    modulo.style.display = 'none';
-})
+const boardSize = 10;
 
 class Ship {
     constructor(name, length) {
@@ -90,6 +87,7 @@ function canPlaceShip(startIndex, shipLength, orientation, boardSize) {
     return true; 
 }
 
+
 function placeShip(cell, ship, orientation) {
     const index = parseInt(cell.getAttribute('data-index'), 10);
     const moduloGameboard = document.getElementById('moduloGameboard').children;
@@ -113,10 +111,11 @@ function placeShip(cell, ship, orientation) {
 function handleCellClick(event) {
     const cell = event.target;
     if (currentShip) {
-        const success = placeShip(cell, currentShip, placementDisplay.textContent.toLowerCase());
+        const success = placeShip(cell, currentShip, currentOrientation);
         if (success) {
             currentShip = ships.length > 0 ? ships.shift() : null; 
             if (!currentShip) {
+                // modulo.style.display = 'none';
                 console.log('All ships placed');
             }
         }
@@ -134,9 +133,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     toggleButton.addEventListener('click', () => {
-        console.log("Toggle button clicked");
         placementDisplay.textContent = placementDisplay.textContent === 'Horizontal' ? 'Vertical' : 'Horizontal';
+        currentOrientation = placementDisplay.textContent.toLowerCase();
     });
+
+    doneButton.addEventListener('click', () => {
+        modulo.style.display = 'none';
+    })
 
     currentShip = ships.shift();
 });
