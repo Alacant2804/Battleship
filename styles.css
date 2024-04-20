@@ -53,6 +53,10 @@ body, html {
     background-color: #20c997;
 }
 
+.cell.invalid {
+    background-color: red;
+}
+
 .modulo {
     position: fixed;
     top: 50%;

@@ -9,8 +9,11 @@ const boardSize = 10;
 
 class Ship {
     constructor(name, length) {
-        this.name = name
+        this.name = name;
         this.length = length;
+        this.placed = false; 
+        this.orientation = null; 
+        this.startIndex = null;
     }
 }
 
@@ -47,11 +50,17 @@ function showShipPreview(e, ship, orientation) {
 
     const index = parseInt(e.target.getAttribute('data-index'), 10);
     const moduloGameboard = document.getElementById('moduloGameboard').children;
-    
+
     for (let i = 0; i < ship.length; i++) {
         let cellIndex = orientation === 'horizontal' ? index + i : index + i * boardSize;
-        if (cellIndex < moduloGameboard.length) {
+        if (cellIndex >= moduloGameboard.length || (orientation === 'horizontal' && Math.floor(cellIndex / boardSize) !== Math.floor(index / boardSize))) {
+            continue;
+        }
+
+        if (canPlaceShip(index, ship.length, orientation, moduloGameboard, boardSize)) {
             moduloGameboard[cellIndex].classList.add('preview');
+        } else {
+            moduloGameboard[cellIndex].classList.add('invalid');
         }
     }
 }
@@ -61,6 +70,7 @@ function clearShipPreview(e, ship, orientation) {
 
     Array.from(moduloGameboard).forEach(cell => {
         cell.classList.remove('preview');
+        cell.classList.remove('invalid');
     });
 }
 
@@ -87,11 +97,14 @@ function isSurroundingCellEmpty(cellIndex, board, boardSize) {
 
 function canPlaceShip(startIndex, shipLength, orientation, board, boardSize) {
     for (let i = 0; i < shipLength; i++) {
-        let cellIndex;
-        if (orientation === 'horizontal') {
-            cellIndex = startIndex + i;
-        } else { 
-            cellIndex = startIndex + i * boardSize;
+        let cellIndex = orientation === 'horizontal' ? startIndex + i : startIndex + i * boardSize;
+        
+        if (orientation === 'horizontal' && Math.floor(cellIndex / boardSize) !== Math.floor(startIndex / boardSize)) {
+            return false;
+        }
+
+        if (orientation === 'vertical' && cellIndex >= board.length) {
+            return false;
         }
 
         if (!board[cellIndex] || board[cellIndex].classList.contains('ship')) {
@@ -99,51 +112,53 @@ function canPlaceShip(startIndex, shipLength, orientation, board, boardSize) {
         }
 
         if (!isSurroundingCellEmpty(cellIndex, board, boardSize)) {
-            return false; 
+            return false;
         }
     }
-
     return true;
 }
+
 
 function placeShip(cell, ship, orientation) {
     const index = parseInt(cell.getAttribute('data-index'), 10);
     const moduloGameboard = document.getElementById('moduloGameboard').children;
-    const boardSize = 10;
-    
+
     if (canPlaceShip(index, ship.length, orientation, moduloGameboard, boardSize)) {
         for (let i = 0; i < ship.length; i++) {
-            if (orientation === 'horizontal') {
-                moduloGameboard[index + i].classList.add('ship');
-            } else {
-                moduloGameboard[index + i * boardSize].classList.add('ship');
-            }
+            const offset = orientation === 'horizontal' ? i : i * boardSize;
+            moduloGameboard[index + offset].classList.add('ship');
         }
+        ship.placed = true;
+        ship.orientation = orientation;
+        ship.startIndex = index;
         return true;
     } else {
-        alert('Invalid placement');
-        return false;
+            return false;
     }
 }
+
 
 function handleCellClick(event) {
     const cell = event.target;
     if (currentShip) {
         const success = placeShip(cell, currentShip, currentOrientation);
         if (success) {
-            currentShip = ships.length > 0 ? ships.shift() : null; 
+            let currentIndex = ships.indexOf(currentShip);
+            currentShip = currentIndex + 1 < ships.length ? ships[currentIndex + 1] : null;
             if (!currentShip) {
-                // modulo.style.display = 'none';
                 console.log('All ships placed');
             }
         }
     }
 }
 
+
 document.addEventListener('DOMContentLoaded', function() {
     const userGameboard = createBoard('userGameboard', 10); 
     const computerGameboard = createBoard('computerGameboard', 10);
     const moduloGameboard = createBoard('moduloGameboard', 10);
+
+    currentShip = ships[0]; 
 
     const cells = moduloGameboard.querySelectorAll('.cell');
     cells.forEach(cell => {
@@ -156,12 +171,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     doneButton.addEventListener('click', () => {
+        transferShipsToMainBoard();
         modulo.style.display = 'none';
-    })
-
-    currentShip = ships.shift();
+    });
 });
 
 
-
-
+function transferShipsToMainBoard() {
+    const userGameboard = document.getElementById('userGameboard').children;
+    ships.forEach(ship => {
+        if (ship.placed) {
+            for (let i = 0; i < ship.length; i++) {
+                const offset = ship.orientation === 'horizontal' ? i : i * boardSize;
+                const cellIndex = ship.startIndex + offset;
+                if (userGameboard[cellIndex]) {
+                    userGameboard[cellIndex].classList.add('ship');
+                }
+            }
+        }
+    });
+}
