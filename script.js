@@ -137,6 +137,48 @@ function placeShip(cell, ship, orientation) {
     }
 }
 
+function placeComputerShips() {
+    const computerGameboard = document.getElementById('computerGameboard').children;
+    ships.forEach(ship => {
+        let placed = false;
+        while (!placed) {
+            const orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+            const startIndex = Math.floor(Math.random() * computerGameboard.length);
+            if (canPlaceShip(startIndex, ship.length, orientation, computerGameboard, boardSize)) {
+                for (let i = 0; i < ship.length; i++) {
+                    const offset = orientation === 'horizontal' ? i : i * boardSize;
+                    const index = startIndex + offset;
+                    if (index < computerGameboard.length) {
+                        computerGameboard[index].classList.add('ship');
+                    }
+                }
+                placed = true;
+            }
+        }
+    });
+}
+
+function setupAttack() {
+    const computerCells = document.getElementById('computerGameboard').querySelectorAll('.cell');
+    computerCells.forEach(cell => {
+        cell.addEventListener('click', function(event) {
+            if (cell.classList.contains('ship')) {
+                cell.classList.add('hit');
+                checkForWin();
+            } else {
+                cell.classList.add('miss');
+            }
+        });
+    });
+}
+
+function checkForWin() {
+    const hits = document.querySelectorAll('#computerGameboard .ship.hit').length;
+    const totalShips = document.querySelectorAll('#computerGameboard .ship').length;
+    if (hits === totalShips) {
+        alert("You win!");
+    }
+}
 
 function handleCellClick(event) {
     const cell = event.target;
@@ -157,6 +199,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const userGameboard = createBoard('userGameboard', 10); 
     const computerGameboard = createBoard('computerGameboard', 10);
     const moduloGameboard = createBoard('moduloGameboard', 10);
+    placeComputerShips();
+    setupAttack();
 
     currentShip = ships[0]; 
 

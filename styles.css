@@ -57,6 +57,14 @@ body, html {
     background-color: red;
 }
 
+.cell.hit {
+    background-color: red; 
+}
+
+.cell.miss {
+    background-color: gray; 
+}
+
 .modulo {
     position: fixed;
     top: 50%;
