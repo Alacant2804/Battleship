@@ -114,8 +114,24 @@ body, html {
     background-color: #ffc107; 
 }
 
-.doneButton {
-    background-color: #28a745;
+.startButton {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    padding: 10px 20px; /* Padding around the text */
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s; /* Smooth transition for background color */
+}
+
+.startButton:hover {
+    background-color: #45a049; /* Darker green background on hover */
+}
+
+.startButton:disabled {
+    background-color: #cccccc; /* Gray background for disabled state */
+    color: #666666; /* Dark gray text for disabled state */
+    cursor: default; /* Default cursor for disabled state */
 }
 
 .footer {
