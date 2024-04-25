@@ -194,13 +194,15 @@ function setupPlayerAttack() {
                 cell.classList.add('miss');
             }
 
-            checkForWin(); 
-
-            playerTurn = false;
-            setTimeout(computerAttack, 1000);
+            const gameEnded = checkForWin(); 
+            if (!gameEnded) {
+                playerTurn = false;
+                setTimeout(computerAttack, 1000);
+            }
         });
     });
 }
+
 
 function getRandomTarget() {
     const userCells = document.getElementById('userGameboard').querySelectorAll('.cell');
@@ -216,17 +218,20 @@ function getRandomTarget() {
 }
 
 function computerAttack() {
-    let target;
-    if (aiState.targetingMode && aiState.possibleTargets.length > 0) {
-        target = aiState.possibleTargets.pop();
-    } else {
-        aiState.targetingMode = false;
-        aiState.possibleTargets = [];
-        target = getRandomTarget();
-    }
+    if (!playerTurn) {
+        let target;
+        if (aiState.targetingMode && aiState.possibleTargets.length > 0) {
+            target = aiState.possibleTargets.pop();
+        } else {
+            aiState.targetingMode = false;
+            aiState.possibleTargets = [];
+            target = getRandomTarget();
+        }
 
-    executeAttack(target);
+        executeAttack(target);
+    }
 }
+
 
 function executeAttack(cell) {
     if (cell.classList.contains('ship')) {
@@ -369,8 +374,11 @@ function checkForWin() {
     const totalShips = document.querySelectorAll('#computerGameboard .ship').length;
     if (hits === totalShips) {
         showModal("Congratulations! You win!");
+        return true;
     }
+    return false; 
 }
+
 
 function checkComputerWin() {
     const hits = document.querySelectorAll('#userGameboard .ship.hit').length;
@@ -451,13 +459,35 @@ function restartGame() {
     });
 
     document.getElementById('winModal').style.display = 'none';
-    document.querySelector('.modulo').style.display = 'block';
+    document.querySelector('.modulo').style.display = 'flex';
 
     createBoard('userGameboard', 10);
     createBoard('computerGameboard', 10);
     createBoard('moduloGameboard', 10);
 
     placeComputerShips(); 
+
+    currentShip = ships[0]; 
+
+    const cells = moduloGameboard.querySelectorAll('.cell');
+    cells.forEach(cell => {
+        cell.addEventListener('click', handleCellClick);
+    });
+
+    toggleButton.addEventListener('click', () => {
+        placementDisplay.textContent = placementDisplay.textContent === 'Horizontal' ? 'Vertical' : 'Horizontal';
+        currentOrientation = placementDisplay.textContent.toLowerCase();
+    });
+
+    startButton.addEventListener('click', () => {
+        if (ships.every(ship => ship.placed)) {
+            transferShipsToMainBoard();
+            modulo.style.display = 'none';
+            setupPlayerAttack();
+        } else {
+            alert("You must place all ships before starting the game.");
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
