@@ -9,7 +9,7 @@ body, html {
 }
 
 .header, .footer {
-    background-color: #004d99;
+    background-color: #333;
     color: #ffffff;
     text-align: center;
     padding: 20px;
@@ -110,34 +110,83 @@ body, html {
     cursor: pointer;
 }
 
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    background-color: #f4f4f4;
+    margin: 15% auto; 
+    padding: 20px;
+    border: 3px solid #0056b3; 
+    width: 50%; 
+    text-align: center;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    border-radius: 10px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: #333;
+}
+
+#restartButton {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+#restartButton:hover {
+    background-color: #45a049;
+}
+
+
 #toggleButton {
     background-color: #ffc107; 
 }
 
 .startButton {
-    background-color: #4CAF50; /* Green background */
-    color: white; /* White text */
-    padding: 10px 20px; /* Padding around the text */
-    border: none; /* No border */
-    border-radius: 5px; /* Rounded corners */
-    cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s; /* Smooth transition for background color */
+    background-color: #4CAF50;
+    color: white; 
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 .startButton:hover {
-    background-color: #45a049; /* Darker green background on hover */
+    background-color: #45a049;
 }
 
 .startButton:disabled {
-    background-color: #cccccc; /* Gray background for disabled state */
-    color: #666666; /* Dark gray text for disabled state */
-    cursor: default; /* Default cursor for disabled state */
+    background-color: #cccccc;
+    color: #666666;
+    cursor: default; 
 }
 
 .footer {
-    background-color: #333;
-    color: #ffffff;
-    text-align: center;
     padding: 10px;
     position: fixed;
     bottom: 0;

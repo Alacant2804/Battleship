@@ -8,13 +8,29 @@ let currentShip = null;
 let currentOrientation = 'horizontal';
 const boardSize = 10;
 
+let aiState = {
+    lastHits: [],
+    targetingMode: false,
+    direction: null,
+    possibleTargets: []
+};
+
 class Ship {
     constructor(name, length) {
         this.name = name;
         this.length = length;
-        this.placed = false; 
-        this.orientation = null; 
+        this.hits = 0;
+        this.placed = false;
+        this.orientation = null;
         this.startIndex = null;
+    }
+
+    hit() {
+        this.hits++;
+        if (this.hits === this.length) {
+            return true;
+        }
+        return false;
     }
 }
 
@@ -186,34 +202,173 @@ function setupPlayerAttack() {
     });
 }
 
-function computerAttack() {
+function getRandomTarget() {
     const userCells = document.getElementById('userGameboard').querySelectorAll('.cell');
-    let attackMade = false;
+    let index;
+    let cell;
 
-    while (!attackMade) {
-        const index = Math.floor(Math.random() * userCells.length);
-        const cell = userCells[index];
+    do {
+        index = Math.floor(Math.random() * userCells.length);
+        cell = userCells[index];
+    } while (cell.classList.contains('hit') || cell.classList.contains('miss')); 
 
-        if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) {
-            if (cell.classList.contains('ship')) {
-                cell.classList.add('hit');
-            } else {
-                cell.classList.add('miss');
-            }
-            attackMade = true; 
+    return cell;
+}
+
+function computerAttack() {
+    let target;
+    if (aiState.targetingMode && aiState.possibleTargets.length > 0) {
+        target = aiState.possibleTargets.pop();
+    } else {
+        aiState.targetingMode = false;
+        aiState.possibleTargets = [];
+        target = getRandomTarget();
+    }
+
+    executeAttack(target);
+}
+
+function executeAttack(cell) {
+    if (cell.classList.contains('ship')) {
+        const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
+        const ship = ships[shipIndex];
+
+        cell.classList.add('hit');
+        // BUG HERE !!!!!
+        // if (ship.hit()) {
+        //     console.log(`Ship sunk: ${ship.name}`);
+        //     markSurroundingCellsAsMiss(ship);
+        // }
+
+        if (aiState.targetingMode) {
+            updatePossibleTargets(cell);
         }
+    } else {
+        cell.classList.add('miss');
+        reevaluateTargets(cell);
     }
 
     checkComputerWin();
-
     playerTurn = true;
 }
+
+function markSurroundingCellsAsMiss(ship) {
+    const start = ship.startIndex;
+    const length = ship.length;
+    const horizontal = ship.orientation === 'horizontal';
+    const boardCells = document.getElementById('userGameboard').children;
+
+    const rowStart = Math.floor(start / boardSize);
+    const colStart = start % boardSize;
+
+    for (let i = 0; i < length; i++) {
+        const index = horizontal ? start + i : start + i * boardSize;
+        const row = Math.floor(index / boardSize);
+        const col = index % boardSize;
+
+        [-1, 0, 1].forEach(dRow => {
+            [-1, 0, 1].forEach(dCol => {
+                const newRow = row + dRow;
+                const newCol = col + dCol;
+                if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
+                    const newIndex = newRow * boardSize + newCol;
+                    if (!boardCells[newIndex].classList.contains('hit')) {
+                        boardCells[newIndex].classList.add('miss');
+                    }
+                }
+            });
+        });
+    }
+}
+
+
+
+function updatePossibleTargets(hitCell) {
+    const index = parseInt(hitCell.getAttribute('data-index'), 10);
+    aiState.possibleTargets = []; 
+
+    if (aiState.lastHits.length === 1) {
+        addTargetCells(hitCell);
+    } else {
+        extendAttackLine(hitCell);
+    }
+}
+
+function addTargetCells(cell) {
+    const index = parseInt(cell.getAttribute('data-index'), 10);
+    [1, -1, boardSize, -boardSize].forEach(offset => {
+        addIfValid(index + offset);
+    });
+}
+
+function determineDirectionAndAddTargets(hitCell) {
+    const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
+    const currentIndex = parseInt(hitCell.getAttribute('data-index'), 10);
+
+    const diff = currentIndex - lastIndex;
+    if (diff === 1 || diff === -1) {
+        aiState.direction = 'horizontal';
+    } else if (diff === boardSize || diff === -boardSize) {
+        aiState.direction = 'vertical';
+    }
+
+    if (aiState.direction === 'horizontal') {
+        addIfValid(currentIndex + diff);  
+    } else if (aiState.direction === 'vertical') {
+        addIfValid(currentIndex + diff);
+    }
+}
+
+function addIfValid(index) {
+    const boardCells = document.getElementById('userGameboard').children;
+    if (index >= 0 && index < boardCells.length) {
+        const cell = boardCells[index];
+        if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) {
+            aiState.possibleTargets.push(cell);
+        }
+    }
+}
+
+function reevaluateTargets(missedCell) {
+    aiState.possibleTargets = aiState.possibleTargets.filter(target => target !== missedCell);
+
+    if (aiState.possibleTargets.length === 0 && aiState.lastHits.length > 0) {
+        extendAttackLine(aiState.lastHits[aiState.lastHits.length - 1], true);
+    }
+
+    if (aiState.possibleTargets.length === 0) {
+        aiState.targetingMode = false; 
+    }
+}
+
+function extendAttackLine(hitCell) {
+    const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
+    const currentIndex = parseInt(hitCell.getAttribute('data-index'), 10);
+    const diff = currentIndex - lastIndex;
+
+    addIfValid(currentIndex + diff);
+
+    if (aiState.lastHits.length === 2) {
+        checkPerpendicularDirections(currentIndex, diff);
+    }
+}
+
+function checkPerpendicularDirections(baseIndex, diff) {
+    if (Math.abs(diff) === 1) { 
+        addIfValid(baseIndex - boardSize);
+        addIfValid(baseIndex + boardSize);
+    } else { 
+        addIfValid(baseIndex - 1);
+        addIfValid(baseIndex + 1);
+    }
+}
+
 
 function checkForWin() {
     const hits = document.querySelectorAll('#computerGameboard .ship.hit').length;
     const totalShips = document.querySelectorAll('#computerGameboard .ship').length;
     if (hits === totalShips) {
-        alert("You win!");
+        showModal("Congratulations! You win!");
     }
 }
 
@@ -221,7 +376,7 @@ function checkComputerWin() {
     const hits = document.querySelectorAll('#userGameboard .ship.hit').length;
     const totalShips = document.querySelectorAll('#userGameboard .ship').length;
     if (hits === totalShips) {
-        alert("Computer wins!");
+        showModal("Sorry! Computer wins!");
     }
 }
 
@@ -254,6 +409,57 @@ function transferShipsToMainBoard() {
     });
 }
 
+function showModal(winMessage) {
+    var modal = document.getElementById('winModal');
+    var span = document.getElementsByClassName("close")[0];
+    var message = document.getElementById('winMessage');
+
+    message.textContent = winMessage; 
+    modal.style.display = "block";
+
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+}
+
+function restartGame() {
+    playerTurn = true; 
+    aiState.lastHits = [];
+    aiState.targetingMode = false;
+    aiState.possibleTargets = [];
+
+    const userCells = document.querySelectorAll('#userGameboard .cell');
+    const computerCells = document.querySelectorAll('#computerGameboard .cell');
+    userCells.forEach(cell => {
+        cell.className = 'cell'; 
+        cell.textContent = '';
+    });
+    computerCells.forEach(cell => {
+        cell.className = 'cell'; 
+        cell.textContent = '';
+    });
+
+    ships.forEach(ship => {
+        ship.placed = false;
+        ship.hits = 0; 
+    });
+
+    document.getElementById('winModal').style.display = 'none';
+    document.querySelector('.modulo').style.display = 'block';
+
+    createBoard('userGameboard', 10);
+    createBoard('computerGameboard', 10);
+    createBoard('moduloGameboard', 10);
+
+    placeComputerShips(); 
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const userGameboard = createBoard('userGameboard', 10); 
     const computerGameboard = createBoard('computerGameboard', 10);
@@ -283,5 +489,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
 });
-
-
