@@ -34,13 +34,22 @@ class Ship {
     }
 }
 
-const ships = [
+const userShips = [
     new Ship('destroyer', 2),
     new Ship('submarine', 3),
     new Ship('cruiser', 3),
     new Ship('battleship', 4),
     new Ship('carrier', 5)
 ];
+
+const computerShips = [
+    new Ship('destroyer', 2),
+    new Ship('submarine', 3),
+    new Ship('cruiser', 3),
+    new Ship('battleship', 4),
+    new Ship('carrier', 5)
+];
+
 
 function createBoard(containerId, size) {
     const container = document.getElementById(containerId);
@@ -155,13 +164,13 @@ function placeShip(cell, ship, orientation) {
 }
 
 function updateStartButtonStatus() {
-    const allPlaced = ships.every(ship => ship.placed);
+    const allPlaced = userShips.every(ship => ship.placed);
     startButton.disabled = !allPlaced;
 }
 
 function placeComputerShips() {
     const computerGameboard = document.getElementById('computerGameboard').children;
-    ships.forEach((ship, shipIndex) => {
+    computerShips.forEach((ship, shipIndex) => {
         let placed = false;
         while (!placed) {
             const orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
@@ -175,6 +184,9 @@ function placeComputerShips() {
                         computerGameboard[index].setAttribute('data-ship-index', shipIndex);
                     }
                 }
+                ship.placed = true;
+                ship.orientation = orientation;
+                ship.startIndex = startIndex;
                 placed = true;
             }
         }
@@ -212,27 +224,27 @@ function setupPlayerAttack() {
     computerCells.forEach(cell => {
         cell.addEventListener('click', function(event) {
             if (!playerTurn || cell.classList.contains('hit') || cell.classList.contains('miss')) {
-                return; 
+                return;
             }
 
             if (cell.classList.contains('ship')) {
-                cell.classList.add('hit');
-                const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
+                const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10); // Check this line
                 console.log("Ship Index:", shipIndex);
-                const ship = ships[shipIndex];
+                const ship = computerShips[shipIndex];
                 if (!ship) {
                     console.error('No ship found at index', shipIndex);
                     return; // Stop execution if no ship is found
                 }
+                cell.classList.add('hit');
                 if (ship.hit()) {
                     console.log(`Ship sunk: ${ship.name}`);
-                    markSurroundingCellsAsMiss(ship);
+                    markSurroundingCellsAsMiss(ship, 'computerGameboard');
                 }
             } else {
                 cell.classList.add('miss');
             }
 
-            const gameEnded = checkForWin(); 
+            const gameEnded = checkForWin();
             if (!gameEnded) {
                 playerTurn = false;
                 setTimeout(computerAttack, 1000);
@@ -271,26 +283,28 @@ function computerAttack() {
 
 function executeAttack(cell) {
     if (cell.classList.contains('ship')) {
+        // Retrieve the ship index stored in the cell
         const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
-        const ship = ships[shipIndex];
-
+        // Access the ship using the ship index from the userShips array
+        console.log("Ship Index:", shipIndex);  // Check the index value
+        const ship = userShips[shipIndex];
+        console.log("Ship object:", ship);
         cell.classList.add('hit');
-        // BUG HERE !!!!!
-        // if (ship.hit()) {
-        //     console.log(`Ship sunk: ${ship.name}`);
-        //     markSurroundingCellsAsMiss(ship);
-        // }
+        if (ship.hit()) {  // Check if this hit sinks the ship
+            console.log(`Ship sunk: ${ship.name}`);
+            markSurroundingCellsAsMiss(ship);  // Mark surrounding cells when ship is sunk
+        }
 
         if (aiState.targetingMode) {
             updatePossibleTargets(cell);
         }
     } else {
         cell.classList.add('miss');
-        reevaluateTargets(cell);
+        reevaluateTargets(cell);  // Reevaluate targeting strategy on a miss
     }
 
-    checkComputerWin();
-    playerTurn = true;
+    checkComputerWin();  // Check if the computer has won after this attack
+    playerTurn = true;  // Switch turn back to player
 }
 
 function updatePossibleTargets(hitCell) {
@@ -396,10 +410,13 @@ function handleCellClick(event) {
     if (currentShip) {
         const success = placeShip(cell, currentShip, currentOrientation);
         if (success) {
-            let currentIndex = ships.indexOf(currentShip);
-            currentShip = currentIndex + 1 < ships.length ? ships[currentIndex + 1] : null;
+            // Find the current index of the ship in the userShips array
+            let currentIndex = userShips.indexOf(currentShip);
+            // Move to the next ship in the userShips array or set to null if all ships are placed
+            currentShip = currentIndex + 1 < userShips.length ? userShips[currentIndex + 1] : null;
             if (!currentShip) {
                 console.log('All ships placed');
+                updateStartButtonStatus(); // Optionally enable the start game button here if all ships are placed
             }
         }
     }
@@ -407,7 +424,7 @@ function handleCellClick(event) {
 
 function transferShipsToMainBoard() {
     const userGameboard = document.getElementById('userGameboard').children;
-    ships.forEach(ship => {
+    userShips.forEach(ship => {
         if (ship.placed) {
             for (let i = 0; i < ship.length; i++) {
                 const offset = ship.orientation === 'horizontal' ? i : i * boardSize;
@@ -447,18 +464,17 @@ function restartGame() {
 
     const userCells = document.querySelectorAll('#userGameboard .cell');
     const computerCells = document.querySelectorAll('#computerGameboard .cell');
-    userCells.forEach(cell => {
-        cell.className = 'cell'; 
-        cell.textContent = '';
-    });
-    computerCells.forEach(cell => {
-        cell.className = 'cell'; 
-        cell.textContent = '';
+    userCells.forEach(cell => cell.className = 'cell');
+    computerCells.forEach(cell => cell.className = 'cell');
+
+    userShips.forEach(ship => {
+        ship.placed = false;
+        ship.hits = 0;
     });
 
-    ships.forEach(ship => {
+    computerShips.forEach(ship => {
         ship.placed = false;
-        ship.hits = 0; 
+        ship.hits = 0;
     });
 
     document.getElementById('winModal').style.display = 'none';
@@ -468,14 +484,12 @@ function restartGame() {
     createBoard('computerGameboard', 10);
     createBoard('moduloGameboard', 10);
 
-    placeComputerShips(); 
+    placeComputerShips();
 
-    currentShip = ships[0]; 
+    currentShip = userShips[0]; 
 
-    const cells = moduloGameboard.querySelectorAll('.cell');
-    cells.forEach(cell => {
-        cell.addEventListener('click', handleCellClick);
-    });
+    const cells = document.querySelectorAll('#moduloGameboard .cell');
+    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 
     toggleButton.addEventListener('click', () => {
         placementDisplay.textContent = placementDisplay.textContent === 'Horizontal' ? 'Vertical' : 'Horizontal';
@@ -483,9 +497,9 @@ function restartGame() {
     });
 
     startButton.addEventListener('click', () => {
-        if (ships.every(ship => ship.placed)) {
+        if (userShips.every(ship => ship.placed)) {
             transferShipsToMainBoard();
-            modulo.style.display = 'none';
+            document.querySelector('.modulo').style.display = 'none';
             setupPlayerAttack();
         } else {
             alert("You must place all ships before starting the game.");
@@ -493,13 +507,14 @@ function restartGame() {
     });
 }
 
+
 document.addEventListener('DOMContentLoaded', function() {
     const userGameboard = createBoard('userGameboard', 10); 
     const computerGameboard = createBoard('computerGameboard', 10);
     const moduloGameboard = createBoard('moduloGameboard', 10);
     placeComputerShips();
 
-    currentShip = ships[0]; 
+    currentShip = userShips[0]; 
 
     const cells = moduloGameboard.querySelectorAll('.cell');
     cells.forEach(cell => {
@@ -512,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     startButton.addEventListener('click', () => {
-        if (ships.every(ship => ship.placed)) {
+        if (userShips.every(ship => ship.placed)) {
             transferShipsToMainBoard();
             modulo.style.display = 'none';
             setupPlayerAttack();
