@@ -50,7 +50,6 @@ const computerShips = [
     new Ship('carrier', 5)
 ];
 
-
 function createBoard(containerId, size) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
@@ -290,7 +289,6 @@ function executeAttack(cell) {
         cell.classList.add('hit');
 
         if (ship.hit()) { 
-            console.log(`Ship sunk: ${ship.name}`);
             markSurroundingCellsAsMiss(ship, 'userGameboard');
         }
 
@@ -307,7 +305,6 @@ function executeAttack(cell) {
 }
 
 function updatePossibleTargets(hitCell) {
-    const index = parseInt(hitCell.getAttribute('data-index'), 10);
     aiState.possibleTargets = []; 
 
     if (aiState.lastHits.length === 1) {
@@ -322,6 +319,16 @@ function addTargetCells(cell) {
     [1, -1, boardSize, -boardSize].forEach(offset => {
         addIfValid(index + offset);
     });
+}
+
+function addIfValid(index) {
+    const boardCells = document.getElementById('userGameboard').children;
+    if (index >= 0 && index < boardCells.length) {
+        const cell = boardCells[index];
+        if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) {
+            aiState.possibleTargets.push(cell);
+        }
+    }
 }
 
 function determineDirectionAndAddTargets(hitCell) {
@@ -339,16 +346,6 @@ function determineDirectionAndAddTargets(hitCell) {
         addIfValid(currentIndex + diff);  
     } else if (aiState.direction === 'vertical') {
         addIfValid(currentIndex + diff);
-    }
-}
-
-function addIfValid(index) {
-    const boardCells = document.getElementById('userGameboard').children;
-    if (index >= 0 && index < boardCells.length) {
-        const cell = boardCells[index];
-        if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) {
-            aiState.possibleTargets.push(cell);
-        }
     }
 }
 
@@ -506,7 +503,6 @@ function restartGame() {
         }
     });
 }
-
 
 document.addEventListener('DOMContentLoaded', function() {
     const userGameboard = createBoard('userGameboard', 10); 
