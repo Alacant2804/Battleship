@@ -203,7 +203,6 @@ function setupPlayerAttack() {
     });
 }
 
-
 function getRandomTarget() {
     const userCells = document.getElementById('userGameboard').querySelectorAll('.cell');
     let index;
@@ -286,8 +285,6 @@ function markSurroundingCellsAsMiss(ship) {
     }
 }
 
-
-
 function updatePossibleTargets(hitCell) {
     const index = parseInt(hitCell.getAttribute('data-index'), 10);
     aiState.possibleTargets = []; 
@@ -368,7 +365,6 @@ function checkPerpendicularDirections(baseIndex, diff) {
     }
 }
 
-
 function checkForWin() {
     const hits = document.querySelectorAll('#computerGameboard .ship.hit').length;
     const totalShips = document.querySelectorAll('#computerGameboard .ship').length;
@@ -378,7 +374,6 @@ function checkForWin() {
     }
     return false; 
 }
-
 
 function checkComputerWin() {
     const hits = document.querySelectorAll('#userGameboard .ship.hit').length;
