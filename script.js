@@ -193,11 +193,13 @@ function placeComputerShips() {
     });
 }
 
-function markSurroundingCellsAsMiss(ship) {
+function markSurroundingCellsAsMiss(ship, board) {
     const start = ship.startIndex;
     const length = ship.length;
     const horizontal = ship.orientation === 'horizontal';
-    const boardCells = document.getElementById('computerGameboard').children;
+    const boardCells = document.getElementById(board).children;
+
+    console.log(`Marking around sunk ship on ${board}: Start ${start}, Length ${length}, Horizontal ${horizontal}`);
 
     for (let i = 0; i < length; i++) {
         const index = horizontal ? start + i : start + i * boardSize;
@@ -212,6 +214,7 @@ function markSurroundingCellsAsMiss(ship) {
                     const newIndex = newRow * boardSize + newCol;
                     if (!boardCells[newIndex].classList.contains('ship') && !boardCells[newIndex].classList.contains('hit')) {
                         boardCells[newIndex].classList.add('miss');
+                        console.log(`Marking cell ${newIndex} as miss`);
                     }
                 }
             });
@@ -228,16 +231,14 @@ function setupPlayerAttack() {
             }
 
             if (cell.classList.contains('ship')) {
-                const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10); // Check this line
-                console.log("Ship Index:", shipIndex);
+                const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
                 const ship = computerShips[shipIndex];
                 if (!ship) {
                     console.error('No ship found at index', shipIndex);
-                    return; // Stop execution if no ship is found
+                    return;
                 }
                 cell.classList.add('hit');
                 if (ship.hit()) {
-                    console.log(`Ship sunk: ${ship.name}`);
                     markSurroundingCellsAsMiss(ship, 'computerGameboard');
                 }
             } else {
@@ -283,16 +284,14 @@ function computerAttack() {
 
 function executeAttack(cell) {
     if (cell.classList.contains('ship')) {
-        // Retrieve the ship index stored in the cell
+
         const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
-        // Access the ship using the ship index from the userShips array
-        console.log("Ship Index:", shipIndex);  // Check the index value
         const ship = userShips[shipIndex];
-        console.log("Ship object:", ship);
         cell.classList.add('hit');
-        if (ship.hit()) {  // Check if this hit sinks the ship
+
+        if (ship.hit()) { 
             console.log(`Ship sunk: ${ship.name}`);
-            markSurroundingCellsAsMiss(ship);  // Mark surrounding cells when ship is sunk
+            markSurroundingCellsAsMiss(ship, 'userGameboard');
         }
 
         if (aiState.targetingMode) {
@@ -300,11 +299,11 @@ function executeAttack(cell) {
         }
     } else {
         cell.classList.add('miss');
-        reevaluateTargets(cell);  // Reevaluate targeting strategy on a miss
+        reevaluateTargets(cell); 
     }
 
-    checkComputerWin();  // Check if the computer has won after this attack
-    playerTurn = true;  // Switch turn back to player
+    checkComputerWin();
+    playerTurn = true;
 }
 
 function updatePossibleTargets(hitCell) {
@@ -424,13 +423,14 @@ function handleCellClick(event) {
 
 function transferShipsToMainBoard() {
     const userGameboard = document.getElementById('userGameboard').children;
-    userShips.forEach(ship => {
+    userShips.forEach((ship, shipIndex) => {
         if (ship.placed) {
             for (let i = 0; i < ship.length; i++) {
                 const offset = ship.orientation === 'horizontal' ? i : i * boardSize;
                 const cellIndex = ship.startIndex + offset;
                 if (userGameboard[cellIndex]) {
                     userGameboard[cellIndex].classList.add('ship');
+                    userGameboard[cellIndex].setAttribute('data-ship-index', shipIndex);
                 }
             }
         }
