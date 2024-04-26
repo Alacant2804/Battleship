@@ -161,7 +161,7 @@ function updateStartButtonStatus() {
 
 function placeComputerShips() {
     const computerGameboard = document.getElementById('computerGameboard').children;
-    ships.forEach(ship => {
+    ships.forEach((ship, shipIndex) => {
         let placed = false;
         while (!placed) {
             const orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
@@ -172,6 +172,7 @@ function placeComputerShips() {
                     const index = startIndex + offset;
                     if (index < computerGameboard.length) {
                         computerGameboard[index].classList.add('ship');
+                        computerGameboard[index].setAttribute('data-ship-index', shipIndex);
                     }
                 }
                 placed = true;
@@ -180,16 +181,53 @@ function placeComputerShips() {
     });
 }
 
+function markSurroundingCellsAsMiss(ship) {
+    const start = ship.startIndex;
+    const length = ship.length;
+    const horizontal = ship.orientation === 'horizontal';
+    const boardCells = document.getElementById('computerGameboard').children;
+
+    for (let i = 0; i < length; i++) {
+        const index = horizontal ? start + i : start + i * boardSize;
+        const row = Math.floor(index / boardSize);
+        const col = index % boardSize;
+
+        [-1, 0, 1].forEach(dRow => {
+            [-1, 0, 1].forEach(dCol => {
+                const newRow = row + dRow;
+                const newCol = col + dCol;
+                if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
+                    const newIndex = newRow * boardSize + newCol;
+                    if (!boardCells[newIndex].classList.contains('ship') && !boardCells[newIndex].classList.contains('hit')) {
+                        boardCells[newIndex].classList.add('miss');
+                    }
+                }
+            });
+        });
+    }
+}
+
 function setupPlayerAttack() {
     const computerCells = document.getElementById('computerGameboard').querySelectorAll('.cell');
     computerCells.forEach(cell => {
         cell.addEventListener('click', function(event) {
             if (!playerTurn || cell.classList.contains('hit') || cell.classList.contains('miss')) {
-                return;
+                return; 
             }
 
             if (cell.classList.contains('ship')) {
                 cell.classList.add('hit');
+                const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
+                console.log("Ship Index:", shipIndex);
+                const ship = ships[shipIndex];
+                if (!ship) {
+                    console.error('No ship found at index', shipIndex);
+                    return; // Stop execution if no ship is found
+                }
+                if (ship.hit()) {
+                    console.log(`Ship sunk: ${ship.name}`);
+                    markSurroundingCellsAsMiss(ship);
+                }
             } else {
                 cell.classList.add('miss');
             }
@@ -231,7 +269,6 @@ function computerAttack() {
     }
 }
 
-
 function executeAttack(cell) {
     if (cell.classList.contains('ship')) {
         const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
@@ -254,35 +291,6 @@ function executeAttack(cell) {
 
     checkComputerWin();
     playerTurn = true;
-}
-
-function markSurroundingCellsAsMiss(ship) {
-    const start = ship.startIndex;
-    const length = ship.length;
-    const horizontal = ship.orientation === 'horizontal';
-    const boardCells = document.getElementById('userGameboard').children;
-
-    const rowStart = Math.floor(start / boardSize);
-    const colStart = start % boardSize;
-
-    for (let i = 0; i < length; i++) {
-        const index = horizontal ? start + i : start + i * boardSize;
-        const row = Math.floor(index / boardSize);
-        const col = index % boardSize;
-
-        [-1, 0, 1].forEach(dRow => {
-            [-1, 0, 1].forEach(dCol => {
-                const newRow = row + dRow;
-                const newCol = col + dCol;
-                if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
-                    const newIndex = newRow * boardSize + newCol;
-                    if (!boardCells[newIndex].classList.contains('hit')) {
-                        boardCells[newIndex].classList.add('miss');
-                    }
-                }
-            });
-        });
-    }
 }
 
 function updatePossibleTargets(hitCell) {
