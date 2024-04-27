@@ -266,6 +266,10 @@ function getRandomTarget() {
     return cell;
 }
 
+// If it's not player's turn 
+// Check if we are in targeting mode and there are possible targets
+// Take first target from that array and pass it to executeAttact function
+// Otherwise get random target
 function computerAttack() {
     if (!playerTurn) {
         let target;
@@ -281,46 +285,79 @@ function computerAttack() {
     }
 }
 
+// If computer hit the cell with ship
+// Add that cell to lastHits array
+// If sunk the ship - reset 
+// Otherwise pass the cell to the updatePossibleTargets
 function executeAttack(cell) {
     if (cell.classList.contains('ship')) {
-
         const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
         const ship = userShips[shipIndex];
         cell.classList.add('hit');
+        aiState.lastHits.push(cell); 
 
-        if (ship.hit()) { 
+        if (ship.hit()) {
             markSurroundingCellsAsMiss(ship, 'userGameboard');
-        }
-
-        if (aiState.targetingMode) {
+            aiState.lastHits = [];
+            aiState.targetingMode = false;
+        } else {
+            aiState.targetingMode = true;
             updatePossibleTargets(cell);
         }
     } else {
         cell.classList.add('miss');
-        reevaluateTargets(cell); 
+        reevaluateTargets(cell);
     }
 
     checkComputerWin();
-    playerTurn = true;
+    playerTurn = true; 
 }
 
+// If there are at least 2 cells in lastHits array
+// Use the function that determines the orientation of the ship
+// Otherwise 
 function updatePossibleTargets(hitCell) {
-    aiState.possibleTargets = []; 
-
-    if (aiState.lastHits.length === 1) {
-        addTargetCells(hitCell);
+    if (aiState.lastHits.length > 1) {
+        // Use the known hits to determine the direction and target accordingly.
+        determineDirectionAndAddTargets(hitCell);
     } else {
-        extendAttackLine(hitCell);
+        // Add targets based on the available information (directional or all adjacent).
+        addTargetCells(hitCell);
     }
 }
 
-function addTargetCells(cell) {
-    const index = parseInt(cell.getAttribute('data-index'), 10);
-    [1, -1, boardSize, -boardSize].forEach(offset => {
-        addIfValid(index + offset);
-    });
+// Based on the difference between cell's indexes checks the placement of the ship
+// Based on orientation adds to the potential target array potential targets
+function determineDirectionAndAddTargets(hitCell) {
+    const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
+    const currentIndex = parseInt(hitCell.getAttribute('data-index'), 10);
+    const diff = currentIndex - lastIndex;
+
+    if (Math.abs(diff) === 1 || Math.abs(diff) === boardSize) {
+        aiState.direction = Math.abs(diff) === 1 ? 'horizontal' : 'vertical';
+        addIfValid(currentIndex + diff);
+        addIfValid(currentIndex - diff);
+    }
 }
 
+// Selects the cell and based on that cell we add to possible target array the cell + offset to check the nearby cells
+// This function is used to basically find the orientation of the ship
+function addTargetCells(hitCell) {
+    const index = parseInt(hitCell.getAttribute('data-index'), 10);
+    if (aiState.lastHits.length === 1 && aiState.direction) {
+        // If a direction has been established, add cells only in that direction.
+        const offset = (aiState.direction === 'horizontal') ? 1 : boardSize;
+        addIfValid(index + offset);
+        addIfValid(index - offset);
+    } else {
+        // If no direction is known, add all adjacent cells.
+        [1, -1, boardSize, -boardSize].forEach(offset => {
+            addIfValid(index + offset);
+        });
+    }
+}
+
+//Checks if the cell is inside the board. If yes adds it to the possible targets array
 function addIfValid(index) {
     const boardCells = document.getElementById('userGameboard').children;
     if (index >= 0 && index < boardCells.length) {
@@ -331,29 +368,11 @@ function addIfValid(index) {
     }
 }
 
-function determineDirectionAndAddTargets(hitCell) {
-    const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
-    const currentIndex = parseInt(hitCell.getAttribute('data-index'), 10);
-
-    const diff = currentIndex - lastIndex;
-    if (diff === 1 || diff === -1) {
-        aiState.direction = 'horizontal';
-    } else if (diff === boardSize || diff === -boardSize) {
-        aiState.direction = 'vertical';
-    }
-
-    if (aiState.direction === 'horizontal') {
-        addIfValid(currentIndex + diff);  
-    } else if (aiState.direction === 'vertical') {
-        addIfValid(currentIndex + diff);
-    }
-}
-
 function reevaluateTargets(missedCell) {
     aiState.possibleTargets = aiState.possibleTargets.filter(target => target !== missedCell);
 
     if (aiState.possibleTargets.length === 0 && aiState.lastHits.length > 0) {
-        extendAttackLine(aiState.lastHits[aiState.lastHits.length - 1], true);
+        extendAttackLine(aiState.lastHits[aiState.lastHits.length - 1]);
     }
 
     if (aiState.possibleTargets.length === 0) {
@@ -361,25 +380,24 @@ function reevaluateTargets(missedCell) {
     }
 }
 
-function extendAttackLine(hitCell) {
-    const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
-    const currentIndex = parseInt(hitCell.getAttribute('data-index'), 10);
-    const diff = currentIndex - lastIndex;
+ function extendAttackLine() {
+    if (aiState.lastHits.length >= 1) {
+        const currentIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 1].getAttribute('data-index'), 10);
 
-    addIfValid(currentIndex + diff);
+        if (aiState.lastHits.length === 1) {
+            // Explore all possible directions because orientation is not yet established.
+            [1, -1, boardSize, -boardSize].forEach(offset => {
+                addIfValid(currentIndex + offset);
+            });
+        } else {
+            // Direction is known, proceed in both directions of the established line.
+            const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
+            const diff = currentIndex - lastIndex;
 
-    if (aiState.lastHits.length === 2) {
-        checkPerpendicularDirections(currentIndex, diff);
-    }
-}
-
-function checkPerpendicularDirections(baseIndex, diff) {
-    if (Math.abs(diff) === 1) { 
-        addIfValid(baseIndex - boardSize);
-        addIfValid(baseIndex + boardSize);
-    } else { 
-        addIfValid(baseIndex - 1);
-        addIfValid(baseIndex + 1);
+            // Check in the direction of the last hit and the opposite direction
+            addIfValid(currentIndex + diff);
+            addIfValid(currentIndex - diff);
+        }
     }
 }
 
