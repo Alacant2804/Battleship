@@ -10,23 +10,27 @@
     <body>
         <header class="header"><h1>Battleship</h1></header>
 
-        <div class="boards">
-            <div class="game-board" id="userGameboard"></div>
-            <div class="game-board" id="computerGameboard"></div>
-        </div>
+        <div class="content">
+            <div class="boards">
+                <div class="game-board" id="userGameboard"></div>
+                <div class="game-board" id="computerGameboard"></div>
+            </div>
 
         <div class="modulo">
             <button id="toggleButton">Ship Placement</button>
             <div class="placementDisplay">Horizontal</div>
             <div class="modulo-gameboard" id="moduloGameboard"></div>
-            <button class="startButton" disabled>Start</button>
+            <div class="buttonContainer">
+                <button class="startButton" disabled>Start</button>
+                <button id="undoButton">Undo</button>
+            </div>
         </div>        
 
         <div id="winModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <p id="winMessage"></p>
-                <button id="restartButton" onclick="restartGame()">Restart Game</button>
+                <button id="restartButton">Restart Game</button>
             </div>
         </div>
 

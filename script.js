@@ -1,10 +1,9 @@
-const toggleButton = document.getElementById('toggleButton');
-const placementDisplay = document.querySelector('.placementDisplay');
-const startButton = document.querySelector('.startButton');
 const modulo = document.querySelector('.modulo');
+const startButton = document.querySelector('.startButton');
 
 let playerTurn = true;
 let currentShip = null;
+let placedShips = [];
 let currentOrientation = 'horizontal';
 const boardSize = 10;
 
@@ -155,16 +154,30 @@ function placeShip(cell, ship, orientation) {
         ship.placed = true;
         ship.orientation = orientation;
         ship.startIndex = index;
-        updateStartButtonStatus();
+        placedShips.push(ship);
         return true;
     } else {
             return false;
     }
 }
 
-function updateStartButtonStatus() {
-    const allPlaced = userShips.every(ship => ship.placed);
-    startButton.disabled = !allPlaced;
+function undoLastPlacement() {
+    if (placedShips.length > 0) {
+        const lastShip = placedShips.pop();
+        const { startIndex, orientation, length } = lastShip;
+        const moduloGameboard = document.getElementById('moduloGameboard').children;
+
+        for (let i = 0; i < length; i++) {
+            const offset = orientation === 'horizontal' ? i : i * boardSize;
+            moduloGameboard[startIndex + offset].classList.remove('ship');
+        }
+
+        lastShip.placed = false;
+        lastShip.orientation = null;
+        lastShip.startIndex = null;
+
+        currentShip = lastShip;  
+    }
 }
 
 function placeComputerShips() {
@@ -430,7 +443,8 @@ function handleCellClick(event) {
             currentShip = currentIndex + 1 < userShips.length ? userShips[currentIndex + 1] : null;
             if (!currentShip) {
                 console.log('All ships placed');
-                updateStartButtonStatus(); // Optionally enable the start game button here if all ships are placed
+                const allPlaced = userShips.every(ship => ship.placed);
+                startButton.disabled = !allPlaced; // Optionally enable the start game button here if all ships are placed
             }
         }
     }
@@ -453,9 +467,9 @@ function transferShipsToMainBoard() {
 }
 
 function showModal(winMessage) {
-    var modal = document.getElementById('winModal');
-    var span = document.getElementsByClassName("close")[0];
-    var message = document.getElementById('winMessage');
+    let modal = document.getElementById('winModal');
+    let span = document.getElementsByClassName("close")[0];
+    let message = document.getElementById('winMessage');
 
     message.textContent = winMessage; 
     modal.style.display = "block";
@@ -495,34 +509,10 @@ function restartGame() {
     document.getElementById('winModal').style.display = 'none';
     document.querySelector('.modulo').style.display = 'flex';
 
-    createBoard('userGameboard', 10);
-    createBoard('computerGameboard', 10);
-    createBoard('moduloGameboard', 10);
-
-    placeComputerShips();
-
-    currentShip = userShips[0]; 
-
-    const cells = document.querySelectorAll('#moduloGameboard .cell');
-    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
-
-    toggleButton.addEventListener('click', () => {
-        placementDisplay.textContent = placementDisplay.textContent === 'Horizontal' ? 'Vertical' : 'Horizontal';
-        currentOrientation = placementDisplay.textContent.toLowerCase();
-    });
-
-    startButton.addEventListener('click', () => {
-        if (userShips.every(ship => ship.placed)) {
-            transferShipsToMainBoard();
-            document.querySelector('.modulo').style.display = 'none';
-            setupPlayerAttack();
-        } else {
-            alert("You must place all ships before starting the game.");
-        }
-    });
+    initiateGame()
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function initiateGame() {
     const userGameboard = createBoard('userGameboard', 10); 
     const computerGameboard = createBoard('computerGameboard', 10);
     const moduloGameboard = createBoard('moduloGameboard', 10);
@@ -535,19 +525,43 @@ document.addEventListener('DOMContentLoaded', function() {
         cell.addEventListener('click', handleCellClick);
     });
 
-    toggleButton.addEventListener('click', () => {
+    setupControlListeners()
+}
+
+function setupControlListeners() {
+    const toggleButton = document.getElementById('toggleButton');
+    const placementDisplay = document.querySelector('.placementDisplay');
+    const undoButton = document.getElementById('undoButton');
+    const restartButton = document.getElementById('restartButton')
+
+    restartButton.addEventListener('click', restartGame)
+
+    placementDisplay.textContent = 'Horizontal';
+    currentOrientation = 'horizontal';
+
+    toggleButton.onclick = togglePlacement;
+    startButton.onclick = startGame;
+
+    undoButton.addEventListener('click', undoLastPlacement);
+
+    function togglePlacement() {
         placementDisplay.textContent = placementDisplay.textContent === 'Horizontal' ? 'Vertical' : 'Horizontal';
         currentOrientation = placementDisplay.textContent.toLowerCase();
-    });
+    }
 
-    startButton.addEventListener('click', () => {
+    function startGame() {
         if (userShips.every(ship => ship.placed)) {
             transferShipsToMainBoard();
-            modulo.style.display = 'none';
+            document.querySelector('.modulo').style.display = 'none';
             setupPlayerAttack();
         } else {
             alert("You must place all ships before starting the game.");
         }
-    });
+    }
+
     
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initiateGame();
 });
