@@ -304,7 +304,6 @@ function executeAttack(cell) {
     if (cell.classList.contains('ship')) {
         const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
         const ship = userShips[shipIndex];
-        cell.classList.add('hit');
         aiState.lastHits.push(cell); 
 
         if (ship.hit()) {
@@ -317,6 +316,9 @@ function executeAttack(cell) {
             aiState.targetingMode = true;
             updatePossibleTargets(cell); // Relevant part of the attack when hit
         }
+
+        cell.classList.add('hit');
+        
     } else {
         cell.classList.add('miss');
         reevaluateTargets(cell);
