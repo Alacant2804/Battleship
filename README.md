@@ -32,7 +32,7 @@ After hitting a ship, the AI will intelligently target surrounding cells.
 
 3. Open the game:
    
-Open index.html in your web browser to start playing.
+   Open index.html in your web browser to start playing.
 
 📜 Rules
 
