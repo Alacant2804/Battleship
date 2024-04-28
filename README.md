@@ -45,7 +45,6 @@ The game ends when all ships of one player are sunk.
 
  Multiplayer mode over network.
  Improved AI difficulty levels.
- Responsive design for mobile devices.
  
 📞 Contact
 
