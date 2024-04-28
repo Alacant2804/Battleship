@@ -111,7 +111,7 @@ function isSurroundingCellEmpty(cellIndex, board, boardSize) {
 
             const surroundingCellIndex = checkRow * boardSize + checkCol;
 
-            if (board[surroundingCellIndex].classList.contains('ship')) {
+            if (board[surroundingCellIndex].classList.contains('ship') || board[surroundingCellIndex].classList.contains('computerShip')) {
                 return false; 
             }
         }
@@ -131,7 +131,7 @@ function canPlaceShip(startIndex, shipLength, orientation, board, boardSize) {
             return false;
         }
 
-        if (!board[cellIndex] || board[cellIndex].classList.contains('ship')) {
+        if (!board[cellIndex] || board[cellIndex].classList.contains('ship') || board[cellIndex].classList.contains('computerShip')) {
             return false;
         }
 
@@ -192,7 +192,7 @@ function placeComputerShips() {
                     const offset = orientation === 'horizontal' ? i : i * boardSize;
                     const index = startIndex + offset;
                     if (index < computerGameboard.length) {
-                        computerGameboard[index].classList.add('ship');
+                        computerGameboard[index].classList.add('computerShip');
                         computerGameboard[index].setAttribute('data-ship-index', shipIndex);
                     }
                 }
@@ -222,7 +222,7 @@ function markSurroundingCellsAsMiss(ship, board) {
                 const newCol = col + dCol;
                 if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
                     const newIndex = newRow * boardSize + newCol;
-                    if (!boardCells[newIndex].classList.contains('ship') && !boardCells[newIndex].classList.contains('hit')) {
+                    if ((!boardCells[newIndex].classList.contains('ship') && !boardCells[newIndex].classList.contains('hit')) || (!boardCells[newIndex].classList.contains('computerShip') && !boardCells[newIndex].classList.contains('hit'))) {
                         boardCells[newIndex].classList.add('miss');
                     }
                 }
@@ -239,7 +239,7 @@ function setupPlayerAttack() {
                 return;
             }
 
-            if (cell.classList.contains('ship')) {
+            if (cell.classList.contains('computerShip')) {
                 const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
                 const ship = computerShips[shipIndex];
                 if (!ship) {
@@ -445,8 +445,8 @@ function reevaluateTargets(missedCell) {
 }
 
 function checkForWin() {
-    const hits = document.querySelectorAll('#computerGameboard .ship.hit').length;
-    const totalShips = document.querySelectorAll('#computerGameboard .ship').length;
+    const hits = document.querySelectorAll('#computerGameboard .computerShip.hit').length;
+    const totalShips = document.querySelectorAll('#computerGameboard .computerShip').length;
     if (hits === totalShips) {
         showModal("Congratulations! You win!");
         return true;
