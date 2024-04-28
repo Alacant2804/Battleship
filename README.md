@@ -24,7 +24,7 @@ After hitting a ship, the AI will intelligently target surrounding cells.
 
 1. **Clone the repository**:
    
-   git clone https://example.com/your-battleship-game.git
+   git clone https://github.com/Alacant2804/Battleship.git
    
 2. Navigate to the project directory:
 
