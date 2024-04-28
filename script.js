@@ -307,6 +307,7 @@ function executeAttack(cell) {
         aiState.lastHits.push(cell); 
 
         if (ship.hit()) {
+            cell.classList.add('hit');
             markSurroundingCellsAsMiss(ship, 'userGameboard');
             aiState.lastHits = [];
             aiState.possibleTargets = [];
@@ -355,7 +356,7 @@ function determineDirectionAndAddTargets(hitCell) {
             addIfValid(currentIndex - diff, currentIndex);
     } else {
         const offset = aiState.direction === 'horizontal' ? 1 : boardSize;
-        addIfValid(firstHitIndex + offset, firstHitIndex)
+        addIfValid(currentIndex + offset, currentIndex)
     }
 }
 
