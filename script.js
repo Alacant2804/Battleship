@@ -211,8 +211,6 @@ function markSurroundingCellsAsMiss(ship, board) {
     const horizontal = ship.orientation === 'horizontal';
     const boardCells = document.getElementById(board).children;
 
-    console.log(`Marking around sunk ship on ${board}: Start ${start}, Length ${length}, Horizontal ${horizontal}`);
-
     for (let i = 0; i < length; i++) {
         const index = horizontal ? start + i : start + i * boardSize;
         const row = Math.floor(index / boardSize);
@@ -226,7 +224,6 @@ function markSurroundingCellsAsMiss(ship, board) {
                     const newIndex = newRow * boardSize + newCol;
                     if (!boardCells[newIndex].classList.contains('ship') && !boardCells[newIndex].classList.contains('hit')) {
                         boardCells[newIndex].classList.add('miss');
-                        console.log(`Marking cell ${newIndex} as miss`);
                     }
                 }
             });
@@ -246,7 +243,6 @@ function setupPlayerAttack() {
                 const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
                 const ship = computerShips[shipIndex];
                 if (!ship) {
-                    console.error('No ship found at index', shipIndex);
                     return;
                 }
                 cell.classList.add('hit');
@@ -300,8 +296,10 @@ function computerAttack() {
 
 // If computer hit the cell with ship
 // Add that cell to lastHits array
-// If sunk the ship - reset 
+// If sunk the ship - mark surrounding cells as missed and reset the lastHits array
+// And exit targeting mode  
 // Otherwise pass the cell to the updatePossibleTargets
+// If there was no ship, add miss and reevalute target
 function executeAttack(cell) {
     if (cell.classList.contains('ship')) {
         const shipIndex = parseInt(cell.getAttribute('data-ship-index'), 10);
@@ -342,16 +340,33 @@ function updatePossibleTargets(hitCell) {
 // Based on the difference between cell's indexes checks the placement of the ship
 // Based on orientation adds to the potential target array potential targets
 function determineDirectionAndAddTargets(hitCell) {
-    const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
     const currentIndex = parseInt(hitCell.getAttribute('data-index'), 10);
-    const diff = currentIndex - lastIndex;
+    aiState.possibleTargets = []; // Clearing existing targets to reset the list
 
-    if (Math.abs(diff) === 1 || Math.abs(diff) === boardSize) {
-        aiState.direction = Math.abs(diff) === 1 ? 'horizontal' : 'vertical';
-        addIfValid(currentIndex + diff);
-        addIfValid(currentIndex - diff);
+    if (aiState.lastHits.length > 1) {
+        // Get the earliest and latest hit to determine the entire hit range
+        const firstHitIndex = parseInt(aiState.lastHits[0].getAttribute('data-index'), 10);
+        const lastHitIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 1].getAttribute('data-index'), 10);
+
+        // Determine the direction based on the position of the first two hits
+        const isHorizontal = Math.abs(lastHitIndex - firstHitIndex) === 1;
+        const offset = isHorizontal ? 1 : boardSize;
+
+        // Add the next cell in both directions based on the current sequence
+        const nextForwardIndex = lastHitIndex + offset;
+        const nextBackwardIndex = firstHitIndex - offset;
+
+        // Check if the forward or backward index is valid and add to possible targets
+        addIfValid(nextForwardIndex, lastHitIndex);
+        addIfValid(nextBackwardIndex, firstHitIndex);
+    } else {
+        // If only one hit, add potential targets in all directions
+        [1, -1, boardSize, -boardSize].forEach(offset => {
+            addIfValid(currentIndex + offset, currentIndex);
+        });
     }
 }
+
 
 // Selects the cell and based on that cell we add to possible target array the cell + offset to check the nearby cells
 // This function is used to basically find the orientation of the ship
@@ -360,26 +375,38 @@ function addTargetCells(hitCell) {
     if (aiState.lastHits.length === 1 && aiState.direction) {
         // If a direction has been established, add cells only in that direction.
         const offset = (aiState.direction === 'horizontal') ? 1 : boardSize;
-        addIfValid(index + offset);
-        addIfValid(index - offset);
+        addIfValid(index + offset, index);
+        addIfValid(index - offset, index);
     } else {
         // If no direction is known, add all adjacent cells.
         [1, -1, boardSize, -boardSize].forEach(offset => {
-            addIfValid(index + offset);
+            addIfValid(index + offset, index);
         });
     }
 }
 
 //Checks if the cell is inside the board. If yes adds it to the possible targets array
-function addIfValid(index) {
+function addIfValid(index, baseIndex) {
     const boardCells = document.getElementById('userGameboard').children;
+    
     if (index >= 0 && index < boardCells.length) {
+        const baseRow = Math.floor(baseIndex / boardSize);
+        const baseCol = baseIndex % boardSize;
+        const newRow = Math.floor(index / boardSize);
+        const newCol = index % boardSize;
+
+        // Prevent adding a cell if it wraps to another row or column
+        if ((baseRow !== newRow && (newCol === 0 || newCol === boardSize - 1)) || (baseCol !== newCol && (newRow === 0 || newRow === boardSize - 1))) {
+            return;
+        }
+
         const cell = boardCells[index];
         if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) {
             aiState.possibleTargets.push(cell);
         }
     }
 }
+
 
 function reevaluateTargets(missedCell) {
     aiState.possibleTargets = aiState.possibleTargets.filter(target => target !== missedCell);
@@ -400,7 +427,7 @@ function reevaluateTargets(missedCell) {
         if (aiState.lastHits.length === 1) {
             // Explore all possible directions because orientation is not yet established.
             [1, -1, boardSize, -boardSize].forEach(offset => {
-                addIfValid(currentIndex + offset);
+                addIfValid(currentIndex + offset, currentIndex);
             });
         } else {
             // Direction is known, proceed in both directions of the established line.
@@ -408,8 +435,8 @@ function reevaluateTargets(missedCell) {
             const diff = currentIndex - lastIndex;
 
             // Check in the direction of the last hit and the opposite direction
-            addIfValid(currentIndex + diff);
-            addIfValid(currentIndex - diff);
+            addIfValid(currentIndex + diff, currentIndex);
+            addIfValid(currentIndex - diff, currentIndex);
         }
     }
 }
