@@ -34,7 +34,7 @@ After hitting a ship, the AI will intelligently target surrounding cells.
    
    Open index.html in your web browser to start playing.
 
-📜 Rules
+## 📜 Rules
 
 Each player has a fleet of ships varying in size from 2 to 5 cells.
 Ships can be placed horizontally or vertically and cannot overlap.
