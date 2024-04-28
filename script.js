@@ -275,7 +275,6 @@ function getRandomTarget() {
     return cell;
 }
 
-// If it's not player's turn 
 // Check if we are in targeting mode and there are possible targets
 // Take first target from that array and pass it to executeAttact function
 // Otherwise get random target
@@ -331,7 +330,7 @@ function executeAttack(cell) {
 
 // If there are at least 2 cells in lastHits array
 // Use the function that determines the orientation of the ship
-// Otherwise 
+// Otherwise try to figure out the possible orientation
 function updatePossibleTargets(hitCell) {
     if (aiState.lastHits.length > 1) {
         // Use the known hits to determine the direction and target accordingly.
@@ -345,7 +344,6 @@ function updatePossibleTargets(hitCell) {
 // Based on the difference between cell's indexes checks the placement of the ship
 // Based on orientation adds to the potential target array potential targets
 function determineDirectionAndAddTargets(hitCell) {
-    const firstHitIndex = parseInt(aiState.lastHits[0].getAttribute('data-index'), 10);
     const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
     const currentIndex = parseInt(hitCell.getAttribute('data-index'), 10);
     const diff = currentIndex - lastIndex;
@@ -364,14 +362,12 @@ function determineDirectionAndAddTargets(hitCell) {
 // This function is used to basically find the orientation of the ship
 function addTargetCells(hitCell) {
     const index = parseInt(hitCell.getAttribute('data-index'), 10);
-    if (aiState.lastHits.length === 1 && aiState.direction) {
-        // If a direction has been established, add cells only in that direction.
+    if (aiState.lastHits.length === 1 && aiState.direction) { // Probably not needed
         const offset = (aiState.direction === 'horizontal') ? 1 : boardSize;
         addIfValid(index + offset, index);
         addIfValid(index - offset, index);
     } else {
-        // If no direction is known, add all adjacent cells.
-        [1, -1, boardSize, -boardSize].forEach(offset => {
+        [1, boardSize, -1, -boardSize].forEach(offset => {
             addIfValid(index + offset, index);
         });
     }
@@ -387,7 +383,7 @@ function addIfValid(index, baseIndex) {
         const newRow = Math.floor(index / boardSize);
         const newCol = index % boardSize;
 
-        // Check for column wrapping only if the direction is horizontal.
+        // Check for column wrapping only if the direction is known
         if (aiState.direction) {
             if ((aiState.direction === 'horizontal' && baseRow !== newRow) ||
                 (aiState.direction === 'vertical' && baseCol !== newCol)) {
@@ -475,7 +471,7 @@ function handleCellClick(event) {
             if (!currentShip) {
                 console.log('All ships placed');
                 const allPlaced = userShips.every(ship => ship.placed);
-                startButton.disabled = !allPlaced; // Optionally enable the start game button here if all ships are placed
+                startButton.disabled = !allPlaced;
             }
         }
     }
