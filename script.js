@@ -310,10 +310,12 @@ function executeAttack(cell) {
         if (ship.hit()) {
             markSurroundingCellsAsMiss(ship, 'userGameboard');
             aiState.lastHits = [];
+            aiState.possibleTargets = [];
+            aiState.direction = false;
             aiState.targetingMode = false;
         } else {
             aiState.targetingMode = true;
-            updatePossibleTargets(cell);
+            updatePossibleTargets(cell); // Relevant part of the attack when hit
         }
     } else {
         cell.classList.add('miss');
@@ -340,33 +342,20 @@ function updatePossibleTargets(hitCell) {
 // Based on the difference between cell's indexes checks the placement of the ship
 // Based on orientation adds to the potential target array potential targets
 function determineDirectionAndAddTargets(hitCell) {
+    const firstHitIndex = parseInt(aiState.lastHits[0].getAttribute('data-index'), 10);
+    const lastIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 2].getAttribute('data-index'), 10);
     const currentIndex = parseInt(hitCell.getAttribute('data-index'), 10);
-    aiState.possibleTargets = []; // Clearing existing targets to reset the list
+    const diff = currentIndex - lastIndex;
 
-    if (aiState.lastHits.length > 1) {
-        // Get the earliest and latest hit to determine the entire hit range
-        const firstHitIndex = parseInt(aiState.lastHits[0].getAttribute('data-index'), 10);
-        const lastHitIndex = parseInt(aiState.lastHits[aiState.lastHits.length - 1].getAttribute('data-index'), 10);
-
-        // Determine the direction based on the position of the first two hits
-        const isHorizontal = Math.abs(lastHitIndex - firstHitIndex) === 1;
-        const offset = isHorizontal ? 1 : boardSize;
-
-        // Add the next cell in both directions based on the current sequence
-        const nextForwardIndex = lastHitIndex + offset;
-        const nextBackwardIndex = firstHitIndex - offset;
-
-        // Check if the forward or backward index is valid and add to possible targets
-        addIfValid(nextForwardIndex, lastHitIndex);
-        addIfValid(nextBackwardIndex, firstHitIndex);
+    if (Math.abs(diff) === 1 || Math.abs(diff) === boardSize) {
+            aiState.direction = Math.abs(diff) === 1 ? 'horizontal' : 'vertical';
+            addIfValid(currentIndex + diff, currentIndex);
+            addIfValid(currentIndex - diff, currentIndex);
     } else {
-        // If only one hit, add potential targets in all directions
-        [1, -1, boardSize, -boardSize].forEach(offset => {
-            addIfValid(currentIndex + offset, currentIndex);
-        });
+        const offset = aiState.direction === 'horizontal' ? 1 : boardSize;
+        addIfValid(firstHitIndex + offset, firstHitIndex)
     }
 }
-
 
 // Selects the cell and based on that cell we add to possible target array the cell + offset to check the nearby cells
 // This function is used to basically find the orientation of the ship
@@ -395,10 +384,23 @@ function addIfValid(index, baseIndex) {
         const newRow = Math.floor(index / boardSize);
         const newCol = index % boardSize;
 
-        // Prevent adding a cell if it wraps to another row or column
-        if ((baseRow !== newRow && (newCol === 0 || newCol === boardSize - 1)) || (baseCol !== newCol && (newRow === 0 || newRow === boardSize - 1))) {
-            return;
+        // Check for column wrapping only if the direction is horizontal.
+        if (aiState.direction) {
+            if ((aiState.direction === 'horizontal' && baseRow !== newRow) ||
+                (aiState.direction === 'vertical' && baseCol !== newCol)) {
+                return;
+            }
+        } else {
+            // Prevent horizontal wrapping at edges when no direction is established
+            if ((baseCol === 0 && newCol === boardSize - 1) || (baseCol === boardSize - 1 && newCol === 0)) {
+                return;
+            }
+            // Prevent vertical wrapping at top and bottom when no direction is established
+            if ((baseRow === 0 && newRow === boardSize - 1) || (baseRow === boardSize - 1 && newRow === 0)) {
+                return;
+            }
         }
+
 
         const cell = boardCells[index];
         if (!cell.classList.contains('hit') && !cell.classList.contains('miss')) {
@@ -406,7 +408,6 @@ function addIfValid(index, baseIndex) {
         }
     }
 }
-
 
 function reevaluateTargets(missedCell) {
     aiState.possibleTargets = aiState.possibleTargets.filter(target => target !== missedCell);
@@ -584,9 +585,7 @@ function setupControlListeners() {
         } else {
             alert("You must place all ships before starting the game.");
         }
-    }
-
-    
+    } 
 }
 
 document.addEventListener('DOMContentLoaded', function() {
