@@ -98,6 +98,11 @@ function clearShipPreview(e, ship, orientation) {
     });
 }
 
+function updateStatus(message) {
+    const statusDiv = document.getElementById('gameStatus');
+    statusDiv.textContent = message;
+}
+
 function isSurroundingCellEmpty(cellIndex, board, boardSize) {
     const row = Math.floor(cellIndex / boardSize);
     const col = cellIndex % boardSize;
@@ -236,6 +241,7 @@ function setupPlayerAttack() {
     computerCells.forEach(cell => {
         cell.addEventListener('click', function(event) {
             if (!playerTurn || cell.classList.contains('hit') || cell.classList.contains('miss')) {
+                updateStatus('Invalid cell, please select new one');
                 return;
             }
 
@@ -246,17 +252,20 @@ function setupPlayerAttack() {
                     return;
                 }
                 cell.classList.add('hit');
+                updateStatus('You hit a ship!');
                 if (ship.hit()) {
                     markSurroundingCellsAsMiss(ship, 'computerGameboard');
+                    updateStatus(`Great job! You sunk a ${ship.name}!`);
                 }
             } else {
+                updateStatus('You missed');
                 cell.classList.add('miss');
             }
 
             const gameEnded = checkForWin();
             if (!gameEnded) {
                 playerTurn = false;
-                setTimeout(computerAttack, 1000);
+                setTimeout(computerAttack, 1500);
             }
         });
     });
@@ -307,19 +316,21 @@ function executeAttack(cell) {
 
         if (ship.hit()) {
             cell.classList.add('hit');
+            updateStatus(`Oh... Computer sunk your ${ship.name}!`);
             markSurroundingCellsAsMiss(ship, 'userGameboard');
             aiState.lastHits = [];
             aiState.possibleTargets = [];
             aiState.direction = false;
             aiState.targetingMode = false;
         } else {
+            updateStatus('Computer hit a ship!');
+            cell.classList.add('hit');
             aiState.targetingMode = true;
             updatePossibleTargets(cell); // Relevant part of the attack when hit
         }
-
-        cell.classList.add('hit');
         
     } else {
+        updateStatus('Computer missed');
         cell.classList.add('miss');
         reevaluateTargets(cell);
     }
@@ -445,6 +456,7 @@ function checkForWin() {
     const hits = document.querySelectorAll('#computerGameboard .computerShip.hit').length;
     const totalShips = document.querySelectorAll('#computerGameboard .computerShip').length;
     if (hits === totalShips) {
+        updateStatus('Great job! You won this battle!');
         showModal("Congratulations! You win!");
         return true;
     }
@@ -455,6 +467,7 @@ function checkComputerWin() {
     const hits = document.querySelectorAll('#userGameboard .ship.hit').length;
     const totalShips = document.querySelectorAll('#userGameboard .ship').length;
     if (hits === totalShips) {
+        updateStatus('Computer won! Better luck next time!');
         showModal("Sorry! Computer wins!");
     }
 }
@@ -517,6 +530,7 @@ function restartGame() {
     aiState.lastHits = [];
     aiState.targetingMode = false;
     aiState.possibleTargets = [];
+    updateStatus('');
 
     const userCells = document.querySelectorAll('#userGameboard .cell');
     const computerCells = document.querySelectorAll('#computerGameboard .cell');
@@ -553,6 +567,7 @@ function initiateGame() {
     });
 
     setupControlListeners()
+    updateStatus('The Battle has started! Make your move');
 }
 
 function setupControlListeners() {
@@ -589,4 +604,7 @@ function setupControlListeners() {
 
 document.addEventListener('DOMContentLoaded', function() {
     initiateGame();
+    const year = new Date().getFullYear();
+    const spanYear = document.getElementById('year');
+    spanYear.textContent = year;
 });
