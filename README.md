@@ -1,6 +1,6 @@
 # 🚢 Battleship Game
 
-Welcome to the classic game of Battleship, where you try to sink your opponent's fleet before they can do the same to yours. This implementation brings you into a tactical battle against the computer.
+Welcome to the classic game of Battleship, where you try to sink your opponent's fleet before they can do the same to yours. This implementation brings you into a tactical battle against the computer. (Live view here)[https://alacant2804.github.io/Battleship/]
 
 ## 🎮 How to Play
 
